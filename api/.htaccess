@@ -1,0 +1,74 @@
+# Apache Configuration for Biodaat API
+# This file handles URL rewriting and security headers
+
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Set base directory
+RewriteBase /biodaat/api/
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ============================================
+# DIRECTORY PROTECTION
+# ============================================
+
+# Disable directory listing
+Options -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "^(\.env|\.htaccess|composer\.json|composer\.lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect PHP files in subdirectories from direct access
+<FilesMatch "^(bootstrap|config|controllers|helpers|middleware)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ============================================
+# URL REWRITING
+# ============================================
+
+# Don't rewrite requests to existing files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route all requests to index.php
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# ============================================
+# PHP SETTINGS (if allowed by hosting)
+# ============================================
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value memory_limit 128M
+</IfModule>
+
+# ============================================
+# GZIP COMPRESSION
+# ============================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/plain
+</IfModule>

@@ -1,0 +1,34 @@
+# Environment files
+.env
+*.env.local
+
+# Storage (generated at runtime)
+storage/pdfs/*
+storage/uploads/*
+storage/logs/*
+!storage/pdfs/.gitkeep
+!storage/uploads/.gitkeep
+!storage/logs/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer (if used later)
+/vendor/
+
+# Node (for Next.js development)
+node_modules/
+.next/
+
+# Static export will be committed
+# app/
+
+# Logs
+*.log
+npm-debug.log*
