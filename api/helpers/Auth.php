@@ -15,6 +15,7 @@ class Auth
 
     /**
      * Get current authenticated user from JWT token
+     * Checks both Authorization header and auth_token cookie
      */
     public static function user(): ?array
     {
@@ -22,7 +23,14 @@ class Auth
             return self::$currentUser;
         }
 
+        // First try Authorization header
         $token = JWT::getTokenFromHeader();
+        
+        // If no header, try cookie
+        if ($token === null && isset($_COOKIE['auth_token'])) {
+            $token = $_COOKIE['auth_token'];
+        }
+        
         if ($token === null) {
             return null;
         }
