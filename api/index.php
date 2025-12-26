@@ -29,12 +29,20 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
 
 // Parse the URI to get the path
-$basePath = '/biodaat/api';
 $path = parse_url($requestUri, PHP_URL_PATH);
 
-// Remove base path from URI
-if (strpos($path, $basePath) === 0) {
-    $path = substr($path, strlen($basePath));
+// Auto-detect base path: find where /api/ is in the path
+// This works for both /biodaat/api/health and /api/health
+$apiPos = strpos($path, '/api/');
+if ($apiPos !== false) {
+    // Extract everything after /api/
+    $path = substr($path, $apiPos + 5); // +5 to skip "/api/"
+} elseif (preg_match('#/api$#', $path)) {
+    // Handle case where path is exactly /api or /biodaat/api
+    $path = '';
+} else {
+    // Fallback: just remove /api prefix if present
+    $path = preg_replace('#^.*/api#', '', $path);
 }
 
 // Clean up path

@@ -4,8 +4,9 @@
 # Enable Rewrite Engine
 RewriteEngine On
 
-# Set base directory
-RewriteBase /biodaat/api/
+# Set base directory (auto-detect)
+# Works for both /api/ and /biodaat/api/
+RewriteBase /
 
 # ============================================
 # SECURITY HEADERS
