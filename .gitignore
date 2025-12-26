@@ -22,13 +22,34 @@ Thumbs.db
 # Composer (if used later)
 /vendor/
 
-# Node (for Next.js development)
-node_modules/
-.next/
+# =========================================
+# Next.js App - Exclude source, keep build
+# =========================================
 
-# Static export will be committed
-# app/
+# Dependencies (not needed on server)
+app/node_modules/
+
+# Source files (not needed on server)  
+app/src/
+
+# Next.js cache
+app/.next/
+
+# Config files (not needed on server)
+app/tsconfig.json
+app/next.config.ts
+app/postcss.config.mjs
+app/eslint.config.mjs
+app/tailwind.config.ts
+
+# Package files (not needed on server)
+app/package.json
+app/package-lock.json
+
+# Keep the production build (out/)
+# !app/out/
 
 # Logs
 *.log
 npm-debug.log*
+
