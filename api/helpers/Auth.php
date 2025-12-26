@@ -69,8 +69,15 @@ class Auth
      */
     public static function generateOTP(int $length = 6): string
     {
-        // In development mode, use static OTP
-        if (env('APP_ENV') === 'development' || env('APP_DEBUG') === true) {
+        // In development mode, use static OTP for testing
+        $appEnv = env('APP_ENV', 'production');
+        $appDebug = env('APP_DEBUG', false);
+        
+        // Check if debug mode (handle both string "true" and boolean true)
+        $isDebug = $appDebug === true || $appDebug === 'true' || $appDebug === '1';
+        $isDev = $appEnv === 'development';
+        
+        if ($isDev || $isDebug) {
             return '123456';
         }
 
