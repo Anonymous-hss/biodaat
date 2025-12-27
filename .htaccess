@@ -1,0 +1,55 @@
+# =============================================
+# Biodaat - .htaccess Configuration
+# Serves static frontend from app/out/ 
+# Routes /api/* to PHP backend
+# =============================================
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # --- API Routes ---
+    # Let /api/* requests pass through to PHP backend
+    RewriteRule ^api/(.*)$ api/$1 [L]
+
+    # --- Static Frontend Routes ---
+    # Serve existing files from app/out/ if they exist
+    RewriteCond %{DOCUMENT_ROOT}/app/out%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ app/out/$1 [L]
+
+    # Serve directories with index.html from app/out/
+    RewriteCond %{DOCUMENT_ROOT}/app/out%{REQUEST_URI}/index.html -f
+    RewriteRule ^(.*)$ app/out/$1/index.html [L]
+
+    # For root request, serve app/out/index.html
+    RewriteRule ^$ app/out/index.html [L]
+
+    # Fallback: serve 404 page for non-existing routes
+    RewriteCond %{DOCUMENT_ROOT}/app/out%{REQUEST_URI} !-f
+    RewriteCond %{DOCUMENT_ROOT}/app/out%{REQUEST_URI} !-d
+    RewriteRule ^(.*)$ app/out/404.html [L]
+</IfModule>
+
+# --- CORS Headers for API ---
+<IfModule mod_headers.c>
+    <FilesMatch "\.php$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    </FilesMatch>
+</IfModule>
+
+# --- Caching for Static Assets ---
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
