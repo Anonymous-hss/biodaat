@@ -29,8 +29,8 @@ Thumbs.db
 # Dependencies (not needed on server)
 app/node_modules/
 
-# Source files (not needed on server)  
-app/src/
+# Source files (commented for dev - uncomment for production deploy)  
+# app/src/
 
 # Next.js cache
 app/.next/
