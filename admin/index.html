@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biodaat Admin - CMS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        
+        /* Login Screen */
+        .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-box h1 { margin-bottom: 8px; color: #333; }
+        .login-box p { color: #666; margin-bottom: 24px; }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 15px; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: #667eea; outline: none; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        
+        /* Buttons */
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-block { width: 100%; }
+        
+        /* Dashboard Layout */
+        .dashboard { display: none; }
+        .dashboard.active { display: flex; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: #1e293b; min-height: 100vh; padding: 24px 0; }
+        .sidebar-logo { padding: 0 24px 24px; border-bottom: 1px solid #334155; margin-bottom: 24px; }
+        .sidebar-logo h2 { color: white; font-size: 20px; }
+        .sidebar-logo p { color: #94a3b8; font-size: 13px; }
+        .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #94a3b8; text-decoration: none; transition: all 0.2s; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background: #334155; color: white; }
+        .sidebar-nav a span { font-size: 18px; }
+        
+        /* Main Content */
+        .main-content { flex: 1; padding: 32px; max-height: 100vh; overflow-y: auto; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 28px; color: #1e293b; margin-bottom: 8px; }
+        .page-header p { color: #64748b; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card h3 { margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .card h3 span { font-size: 24px; }
+        
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        
+        /* Table */
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .table th { background: #f8fafc; font-weight: 600; font-size: 13px; text-transform: uppercase; color: #64748b; }
+        .table tr:hover { background: #f8fafc; }
+        
+        /* Actions */
+        .actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 16px 24px; background: #10b981; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: #ef4444; }
+        
+        /* Hidden sections */
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* Badge */
+        .badge { display: inline-block; padding: 4px 8px; font-size: 12px; border-radius: 4px; }
+        .badge-active { background: #dcfce7; color: #166534; }
+        .badge-inactive { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1>🔐 Admin Login</h1>
+            <p>Biodaat CMS - Content Management</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <h2>✦ Biodaat</h2>
+                <p>Content Management</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" data-section="seo" class="active"><span>🔍</span> SEO & Meta</a>
+                <a href="#" data-section="hero"><span>🏠</span> Hero Section</a>
+                <a href="#" data-section="usps"><span>⭐</span> USPs</a>
+                <a href="#" data-section="templates"><span>🎨</span> Templates</a>
+                <a href="#" data-section="faqs"><span>❓</span> FAQs</a>
+                <a href="#" data-section="footer"><span>📝</span> Footer</a>
+                <a href="#" id="logoutBtn"><span>🚪</span> Logout</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- SEO Section -->
+            <div class="section active" id="section-seo">
+                <div class="page-header">
+                    <h1>🔍 SEO & Meta Tags</h1>
+                    <p>Manage search engine optimization settings</p>
+                </div>
+                <div class="card">
+                    <h3><span>📄</span> Meta Information</h3>
+                    <div class="form-group">
+                        <label>Page Title (appears in browser tab)</label>
+                        <input type="text" data-key="meta_title" placeholder="Biodaat - Free Marriage Biodata Maker">
+                    </div>
+                    <div class="form-group">
+                        <label>Meta Description (appears in Google results)</label>
+                        <textarea data-key="meta_description" placeholder="Create stunning marriage biodata..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Meta Keywords (comma separated)</label>
+                        <input type="text" data-key="meta_keywords" placeholder="marriage biodata, biodata maker...">
+                    </div>
+                    <button class="btn btn-success" onclick="saveSettings()">💾 Save SEO Settings</button>
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="section" id="section-hero">
+                <div class="page-header">
+                    <h1>🏠 Hero Section</h1>
+                    <p>Edit the main banner content</p>
+                </div>
+                <div class="card">
+                    <h3><span>✨</span> Hero Content</h3>
+                    <div class="form-group">
+                        <label>Badge Text (above title)</label>
+                        <input type="text" data-key="hero_badge" placeholder="✨ 100% Free • No Sign-up Required">
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Title Line 1</label>
+                            <input type="text" data-key="hero_title_line1" placeholder="Create Your Marriage">
+                        </div>
+                        <div class="form-group">
+                            <label>Title Line 2 (highlighted)</label>
+                            <input type="text" data-key="hero_title_line2" placeholder="Biodata in Minutes">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Subtitle</label>
+                        <textarea data-key="hero_subtitle" placeholder="Choose from beautiful templates..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>CTA Button Text</label>
+                        <input type="text" data-key="hero_cta_text" placeholder="Create My Biodata →">
+                    </div>
+                    <button class="btn btn-success" onclick="saveSettings()">💾 Save Hero Content</button>
+                </div>
+            </div>
+
+            <!-- USPs Section -->
+            <div class="section" id="section-usps">
+                <div class="page-header">
+                    <h1>⭐ USPs (Features)</h1>
+                    <p>Manage feature highlights</p>
+                </div>
+                <div class="card">
+                    <h3><span>📋</span> Current USPs</h3>
+                    <table class="table" id="uspsTable">
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="showAddModal('usp')">+ Add USP</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div class="section" id="section-templates">
+                <div class="page-header">
+                    <h1>🎨 Templates</h1>
+                    <p>Manage biodata templates</p>
+                </div>
+                <div class="card">
+                    <h3><span>📋</span> Current Templates</h3>
+                    <table class="table" id="templatesTable">
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Name</th>
+                                <th>Color</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FAQs Section -->
+            <div class="section" id="section-faqs">
+                <div class="page-header">
+                    <h1>❓ FAQs</h1>
+                    <p>Manage frequently asked questions</p>
+                </div>
+                <div class="card">
+                    <h3><span>📋</span> Current FAQs</h3>
+                    <table class="table" id="faqsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>Answer</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="showAddModal('faq')">+ Add FAQ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="section" id="section-footer">
+                <div class="page-header">
+                    <h1>📝 Footer</h1>
+                    <p>Edit footer content</p>
+                </div>
+                <div class="card">
+                    <h3><span>📄</span> Footer Content</h3>
+                    <div class="form-group">
+                        <label>Footer Tagline</label>
+                        <input type="text" data-key="footer_tagline" placeholder="✦ Biodaat">
+                    </div>
+                    <div class="form-group">
+                        <label>Copyright Text</label>
+                        <input type="text" data-key="footer_copyright" placeholder="© 2024 Biodaat. Made with ❤️ in India">
+                    </div>
+                    <button class="btn btn-success" onclick="saveSettings()">💾 Save Footer</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '/api';
+        let contentData = {};
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch(`${API_BASE}/cms-login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('dashboard').classList.add('active');
+                    loadContent();
+                    showToast('Welcome back!');
+                } else {
+                    showToast(data.message, true);
+                }
+            } catch (err) {
+                showToast('Login failed', true);
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboard').classList.remove('active');
+        });
+
+        // Navigation
+        document.querySelectorAll('.sidebar-nav a[data-section]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = e.currentTarget.dataset.section;
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+                document.getElementById(`section-${section}`).classList.add('active');
+                e.currentTarget.classList.add('active');
+            });
+        });
+
+        // Load Content
+        async function loadContent() {
+            try {
+                const res = await fetch(`${API_BASE}/cms-content.php`);
+                const data = await res.json();
+                if (data.success) {
+                    contentData = data.data;
+                    populateFields();
+                    populateTables();
+                }
+            } catch (err) {
+                showToast('Failed to load content', true);
+            }
+        }
+
+        // Populate form fields
+        function populateFields() {
+            const settings = contentData.settings || {};
+            document.querySelectorAll('[data-key]').forEach(el => {
+                if (settings[el.dataset.key]) {
+                    el.value = settings[el.dataset.key];
+                }
+            });
+        }
+
+        // Populate tables
+        function populateTables() {
+            // USPs
+            const uspsBody = document.querySelector('#uspsTable tbody');
+            uspsBody.innerHTML = (contentData.usps || []).map(u => `
+                <tr>
+                    <td>${u.icon}</td>
+                    <td>${u.title}</td>
+                    <td>${u.description}</td>
+                    <td><span class="badge badge-active">Active</span></td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-primary" onclick="editUSP(${u.id})">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Templates
+            const templatesBody = document.querySelector('#templatesTable tbody');
+            templatesBody.innerHTML = (contentData.templates || []).map(t => `
+                <tr>
+                    <td>${t.icon}</td>
+                    <td>${t.name}</td>
+                    <td><span style="display:inline-block;width:20px;height:20px;background:${t.color};border-radius:4px;"></span> ${t.color}</td>
+                    <td>${t.description}</td>
+                    <td><span class="badge badge-active">Active</span></td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-primary" onclick="editTemplate(${t.id})">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // FAQs
+            const faqsBody = document.querySelector('#faqsTable tbody');
+            faqsBody.innerHTML = (contentData.faqs || []).map((f, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${f.question}</td>
+                    <td>${f.answer.substring(0, 50)}...</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-primary" onclick="editFAQ(${f.id})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteFAQ(${f.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Save Settings
+        async function saveSettings() {
+            const settings = {};
+            document.querySelectorAll('[data-key]').forEach(el => {
+                settings[el.dataset.key] = el.value;
+            });
+
+            try {
+                const res = await fetch(`${API_BASE}/cms-save-settings.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Settings saved!');
+                } else {
+                    showToast(data.message, true);
+                }
+            } catch (err) {
+                showToast('Failed to save', true);
+            }
+        }
+
+        // Toast
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast' + (isError ? ' error' : '') + ' show';
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Placeholder functions for modals
+        function showAddModal(type) { alert('Add ' + type + ' - Modal coming soon!'); }
+        function editUSP(id) { alert('Edit USP ' + id + ' - Modal coming soon!'); }
+        function editTemplate(id) { alert('Edit Template ' + id + ' - Modal coming soon!'); }
+        function editFAQ(id) { alert('Edit FAQ ' + id + ' - Modal coming soon!'); }
+        function deleteFAQ(id) { if(confirm('Delete this FAQ?')) alert('Delete FAQ ' + id); }
+
+        // Check if already logged in
+        loadContent();
+    </script>
+</body>
+</html>
