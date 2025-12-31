@@ -1,0 +1,442 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Upload, User, GraduationCap, Users as UsersIcon, Phone } from 'lucide-react';
+import api, { ApiError } from '@/lib/api';
+
+// =============================================
+// Types (preserving existing structure)
+// =============================================
+interface BiodataData {
+  photo: string | null;
+  fullName: string;
+  dateOfBirth: string;
+  birthTime: string;
+  birthPlace: string;
+  height: string;
+  complexion: string;
+  bloodGroup: string;
+  maritalStatus: string;
+  aboutMe: string;
+  education: string;
+  occupation: string;
+  company: string;
+  income: string;
+  hobbies: string;
+  religion: string;
+  caste: string;
+  gotra: string;
+  fatherName: string;
+  fatherOccupation: string;
+  motherName: string;
+  motherOccupation: string;
+  siblings: string;
+  familyType: string;
+  address: string;
+  city: string;
+  state: string;
+  phone: string;
+  email: string;
+}
+
+const initialData: BiodataData = {
+  photo: null,
+  fullName: '',
+  dateOfBirth: '',
+  birthTime: '',
+  birthPlace: '',
+  height: '',
+  complexion: '',
+  bloodGroup: '',
+  maritalStatus: 'Never Married',
+  aboutMe: '',
+  education: '',
+  occupation: '',
+  company: '',
+  income: '',
+  hobbies: '',
+  religion: '',
+  caste: '',
+  gotra: '',
+  fatherName: '',
+  fatherOccupation: '',
+  motherName: '',
+  motherOccupation: '',
+  siblings: '',
+  familyType: '',
+  address: '',
+  city: '',
+  state: '',
+  phone: '',
+  email: '',
+};
+
+interface BiodataBuilderProps {
+  selectedTemplate: number;
+}
+
+export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps) {
+  const [data, setData] = useState<BiodataData>(initialData);
+  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<{ downloadUrl: string; shareUrl: string } | null>(null);
+  const [error, setError] = useState('');
+
+  const updateData = (field: keyof BiodataData, value: string | null) => {
+    setData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleGenerate = async () => {
+    if (!data.fullName || !data.dateOfBirth) {
+      setError('Please fill Name and Date of Birth');
+      return;
+    }
+    setGenerating(true);
+    setError('');
+    try {
+      const response = await api.biodatas.generate({
+        template_id: selectedTemplate,
+        name: data.fullName,
+        biodata_data: data as unknown as Record<string, unknown>
+      });
+      setResult({
+        downloadUrl: api.biodatas.getDownloadUrl(response.biodata.download_token || ''),
+        shareUrl: `${window.location.origin}/view/${response.biodata.share_token}`
+      });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        // Demo mode
+        setResult({
+          downloadUrl: '#demo',
+          shareUrl: `${window.location.origin}/view/demo-${Date.now()}`
+        });
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <section id="biodata-builder" className="py-24 px-6 bg-white">
+      <div className="max-w-[1200px] mx-auto">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#1F2937]">
+            Fill Your Details
+          </h2>
+          <p className="text-xl text-[#6B7280]">
+            Your biodata preview updates in real-time
+          </p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Form */}
+          <div className="lg:col-span-2">
+            <Accordion type="single" collapsible defaultValue="personal" className="space-y-4">
+              {/* Personal Details */}
+              <AccordionItem value="personal">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <User className="w-6 h-6 text-[#E07B39]" />
+                    <span>Personal Details</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid md:grid-cols-2 gap-4 pt-2">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="fullName">Full Name *</Label>
+                      <Input id="fullName" value={data.fullName} onChange={e => updateData('fullName', e.target.value)} placeholder="Enter your full name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                      <Input id="dateOfBirth" type="date" value={data.dateOfBirth} onChange={e => updateData('dateOfBirth', e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="birthTime">Birth Time</Label>
+                      <Input id="birthTime" value={data.birthTime} onChange={e => updateData('birthTime', e.target.value)} placeholder="e.g., 10:30 AM" />
+                    </div>
+                    <div>
+                      <Label htmlFor="birthPlace">Birth Place</Label>
+                      <Input id="birthPlace" value={data.birthPlace} onChange={e => updateData('birthPlace', e.target.value)} placeholder="City of birth" />
+                    </div>
+                    <div>
+                      <Label htmlFor="height">Height</Label>
+                      <Input id="height" value={data.height} onChange={e => updateData('height', e.target.value)} placeholder="e.g., 5'8&quot;" />
+                    </div>
+                    <div>
+                      <Label htmlFor="complexion">Complexion</Label>
+                      <select
+                        id="complexion"
+                        value={data.complexion}
+                        onChange={e => updateData('complexion', e.target.value)}
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      >
+                        <option value="">Select</option>
+                        <option>Fair</option>
+                        <option>Wheatish</option>
+                        <option>Medium</option>
+                        <option>Dark</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodGroup">Blood Group</Label>
+                      <select
+                        id="bloodGroup"
+                        value={data.bloodGroup}
+                        onChange={e => updateData('bloodGroup', e.target.value)}
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      >
+                        <option value="">Select</option>
+                        {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => <option key={bg}>{bg}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="maritalStatus">Marital Status</Label>
+                      <select
+                        id="maritalStatus"
+                        value={data.maritalStatus}
+                        onChange={e => updateData('maritalStatus', e.target.value)}
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      >
+                        <option>Never Married</option>
+                        <option>Divorced</option>
+                        <option>Widowed</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="aboutMe">About Me</Label>
+                      <textarea
+                        id="aboutMe"
+                        value={data.aboutMe}
+                        onChange={e => updateData('aboutMe', e.target.value)}
+                        placeholder="A short intro about yourself..."
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base min-h-[80px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Education & Career */}
+              <AccordionItem value="professional">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <GraduationCap className="w-6 h-6 text-[#E07B39]" />
+                    <span>Education & Career</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid md:grid-cols-2 gap-4 pt-2">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="education">Education</Label>
+                      <Input id="education" value={data.education} onChange={e => updateData('education', e.target.value)} placeholder="e.g., B.Tech, MBA" />
+                    </div>
+                    <div>
+                      <Label htmlFor="occupation">Occupation</Label>
+                      <Input id="occupation" value={data.occupation} onChange={e => updateData('occupation', e.target.value)} placeholder="e.g., Software Engineer" />
+                    </div>
+                    <div>
+                      <Label htmlFor="company">Company</Label>
+                      <Input id="company" value={data.company} onChange={e => updateData('company', e.target.value)} placeholder="e.g., Google, TCS" />
+                    </div>
+                    <div>
+                      <Label htmlFor="income">Annual Income</Label>
+                      <Input id="income" value={data.income} onChange={e => updateData('income', e.target.value)} placeholder="e.g., 15-20 LPA" />
+                    </div>
+                    <div>
+                      <Label htmlFor="hobbies">Hobbies</Label>
+                      <Input id="hobbies" value={data.hobbies} onChange={e => updateData('hobbies', e.target.value)} placeholder="e.g., Reading, Music" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Family Details */}
+              <AccordionItem value="family">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <UsersIcon className="w-6 h-6 text-[#E07B39]" />
+                    <span>Family Details</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <Label htmlFor="religion">Religion</Label>
+                      <select
+                        id="religion"
+                        value={data.religion}
+                        onChange={e => updateData('religion', e.target.value)}
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      >
+                        <option value="">Select</option>
+                        <option>Hindu</option>
+                        <option>Muslim</option>
+                        <option>Christian</option>
+                        <option>Sikh</option>
+                        <option>Buddhist</option>
+                        <option>Jain</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="caste">Caste</Label>
+                      <Input id="caste" value={data.caste} onChange={e => updateData('caste', e.target.value)} placeholder="e.g., Brahmin" />
+                    </div>
+                    <div>
+                      <Label htmlFor="gotra">Gotra</Label>
+                      <Input id="gotra" value={data.gotra} onChange={e => updateData('gotra', e.target.value)} placeholder="e.g., Bharadwaj" />
+                    </div>
+                    <div>
+                      <Label htmlFor="familyType">Family Type</Label>
+                      <select
+                        id="familyType"
+                        value={data.familyType}
+                        onChange={e => updateData('familyType', e.target.value)}
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      >
+                        <option value="">Select</option>
+                        <option>Joint Family</option>
+                        <option>Nuclear Family</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="fatherName">Father's Name</Label>
+                      <Input id="fatherName" value={data.fatherName} onChange={e => updateData('fatherName', e.target.value)} placeholder="Father's name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="fatherOccupation">Father's Occupation</Label>
+                      <Input id="fatherOccupation" value={data.fatherOccupation} onChange={e => updateData('fatherOccupation', e.target.value)} placeholder="e.g., Businessman" />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherName">Mother's Name</Label>
+                      <Input id="motherName" value={data.motherName} onChange={e => updateData('motherName', e.target.value)} placeholder="Mother's name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="motherOccupation">Mother's Occupation</Label>
+                      <Input id="motherOccupation" value={data.motherOccupation} onChange={e => updateData('motherOccupation', e.target.value)} placeholder="e.g., Homemaker" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="siblings">Siblings</Label>
+                      <Input id="siblings" value={data.siblings} onChange={e => updateData('siblings', e.target.value)} placeholder="e.g., 1 Elder Brother (Married)" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Contact Information */}
+              <AccordionItem value="contact">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-6 h-6 text-[#E07B39]" />
+                    <span>Contact Information</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid md:grid-cols-2 gap-4 pt-2">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="address">Address</Label>
+                      <textarea
+                        id="address"
+                        value={data.address}
+                        onChange={e => updateData('address', e.target.value)}
+                        placeholder="Full address"
+                        className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base min-h-[60px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63]"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" value={data.city} onChange={e => updateData('city', e.target.value)} placeholder="e.g., Mumbai" />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State</Label>
+                      <Input id="state" value={data.state} onChange={e => updateData('state', e.target.value)} placeholder="e.g., Maharashtra" />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" value={data.phone} onChange={e => updateData('phone', e.target.value)} placeholder="+91 XXXXX XXXXX" />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" value={data.email} onChange={e => updateData('email', e.target.value)} placeholder="your@email.com" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Generate Button */}
+            <div className="mt-8">
+              {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
+
+              {result ? (
+                <Card className="bg-green-50 border-2 border-green-200">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🎉</div>
+                    <h4 className="text-2xl font-bold mb-4 text-green-800">Biodata Generated!</h4>
+                    <div className="flex gap-4 justify-center flex-wrap">
+                      <a href={result.downloadUrl} target="_blank" rel="noopener noreferrer">
+                        <Button size="lg">📥 Download PDF</Button>
+                      </a>
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(result.shareUrl);
+                          alert('Link copied!');
+                        }}
+                        variant="secondary"
+                        size="lg"
+                      >
+                        🔗 Copy Link
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <Button onClick={handleGenerate} disabled={generating} size="lg" className="w-full text-xl py-6">
+                  {generating ? '⏳ Generating...' : '✨ Generate My Biodata'}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Preview (Sticky) */}
+          <div className="lg:sticky lg:top-24 lg:h-fit">
+            <Card className="bg-gradient-to-br from-[#FFF8F0] to-[#FFE4CC]">
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#6B7280] mb-4">Live Preview</p>
+                <div className="bg-white rounded-xl p-6 shadow-inner">
+                  <div className="text-2xl mb-2">🕉️</div>
+                  <h4 className="font-bold mb-4 text-[#0D5C63]">Your Biodata</h4>
+                  <div className="space-y-2 text-sm text-left">
+                    {data.fullName && <p><strong>Name:</strong> {data.fullName}</p>}
+                    {data.dateOfBirth && <p><strong>DOB:</strong> {data.dateOfBirth}</p>}
+                    {data.education && <p><strong>Education:</strong> {data.education}</p>}
+                    {data.occupation && <p><strong>Work:</strong> {data.occupation}</p>}
+                    {data.city && <p><strong>City:</strong> {data.city}</p>}
+                  </div>
+                  {!data.fullName && (
+                    <p className="text-gray-400 text-sm mt-4">
+                      Fill the form to see your biodata preview
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
