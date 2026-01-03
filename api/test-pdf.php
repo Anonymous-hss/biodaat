@@ -4,6 +4,9 @@
  * Tests if PDF generation dependencies are available
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
@@ -37,42 +40,51 @@ if (file_exists($vendorPath)) {
 $bootstrapPath = __DIR__ . '/bootstrap.php';
 $results['checks']['bootstrap_exists'] = file_exists($bootstrapPath);
 
-// Check 5: PDFService
-$pdfServicePath = __DIR__ . '/helpers/PDFService.php';
-$results['checks']['pdfservice_exists'] = file_exists($pdfServicePath);
-
-// Check 6: PDFController
-$pdfControllerPath = __DIR__ . '/controllers/PDFController.php';
-$results['checks']['pdfcontroller_exists'] = file_exists($pdfControllerPath);
-
-// Check 7: Templates directory
-$templatesPath = __DIR__ . '/../templates/html';
-$results['checks']['templates_dir_exists'] = is_dir($templatesPath);
-
-// Try to load bootstrap and test database
+// Try to load and test PDFService
 try {
-    if (defined('APP_ROOT')) {
-        $results['checks']['app_root_defined'] = true;
-    }
-    
     require_once $bootstrapPath;
     $results['checks']['bootstrap_loaded'] = true;
+    $results['checks']['app_root'] = defined('APP_ROOT') ? APP_ROOT : 'NOT DEFINED';
     
-    // Test database connection
-    require_once __DIR__ . '/helpers/Database.php';
-    $db = \Helpers\Database::getInstance();
-    $results['checks']['database_connected'] = true;
+    require_once __DIR__ . '/helpers/PDFService.php';
+    $results['checks']['pdfservice_loaded'] = true;
     
-    // Check templates table
-    $templateCount = $db->count('templates');
-    $results['checks']['templates_count'] = $templateCount;
+    // Try creating PDFService instance
+    $pdfService = new \Helpers\PDFService();
+    $results['checks']['pdfservice_created'] = true;
+    
+    // Create test template and form data
+    $template = [
+        'id' => 1,
+        'name' => 'Test Template',
+        'slug' => 'test',
+        'template_file' => 'test.html',
+        'price' => 0
+    ];
+    
+    $formData = [
+        'full_name' => 'Test User',
+        'date_of_birth' => '1990-01-01',
+        'education' => 'B.Tech'
+    ];
+    
+    // Try generating PDF
+    $result = $pdfService->generate($template, $formData, 0);
+    $results['checks']['pdf_generated'] = true;
+    $results['checks']['pdf_filename'] = $result['filename'];
+    $results['checks']['pdf_size'] = $result['size'];
     
 } catch (Exception $e) {
-    $results['checks']['bootstrap_error'] = $e->getMessage();
+    $results['checks']['error'] = $e->getMessage();
+    $results['checks']['error_file'] = $e->getFile();
+    $results['checks']['error_line'] = $e->getLine();
+} catch (Error $e) {
+    $results['checks']['fatal_error'] = $e->getMessage();
+    $results['checks']['error_file'] = $e->getFile();
+    $results['checks']['error_line'] = $e->getLine();
 }
 
 // Summary
-$allPassed = !in_array(false, $results['checks'], true);
-$results['all_passed'] = $allPassed;
+$results['all_passed'] = isset($results['checks']['pdf_generated']) && $results['checks']['pdf_generated'];
 
 echo json_encode($results, JSON_PRETTY_PRINT);
