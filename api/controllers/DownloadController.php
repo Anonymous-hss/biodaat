@@ -34,9 +34,11 @@ class DownloadController extends BaseController
         }
 
         $db = Database::getInstance();
+        $tokenRecord = null;
+        $dbError = null;
 
         try {
-            // Find token
+            // Find token in DB
             $tokenRecord = $db->fetch(
                 "SELECT dt.*, gb.pdf_filename, gb.user_id
                 FROM download_tokens dt
@@ -44,37 +46,72 @@ class DownloadController extends BaseController
                 WHERE dt.token = ?",
                 [$token]
             );
+        } catch (\Exception $e) {
+            $dbError = $e->getMessage();
+        }
 
-            if ($tokenRecord === null) {
-                Response::error('Invalid download token', 404);
+        // If not found in DB or DB failed, try stateless token verification
+        if ($tokenRecord === null) {
+            // Check for stateless signed token (format: payload.signature)
+            $parts = explode('.', $token);
+            if (count($parts) === 2) {
+                $payload = $parts[0];
+                $signature = $parts[1];
+                $secret = $_ENV['APP_KEY'] ?? 'BioDataMaker_Fallback_Secret_2025';
+
+                // Verify signature
+                $expectedSignature = hash_hmac('sha256', $payload, $secret);
+                
+                if (hash_equals($expectedSignature, $signature)) {
+                    $data = json_decode(base64_decode($payload), true);
+                    
+                    if ($data && isset($data['f'], $data['e'])) {
+                        // Check expiry
+                        if ((int)$data['e'] < time()) {
+                            Response::error('Download link expired', 410);
+                        }
+                        
+                        // Valid stateless token! Serve file directly.
+                        $this->serveFile($data['f']);
+                        return;
+                    }
+                }
             }
 
-            // Check expiry
-            if (strtotime($tokenRecord['expires_at']) < time()) {
-                Response::error('Download token has expired', 410);
+            // If we're here, token is invalid AND DB lookup failed/empty
+            if ($dbError) {
+                // If it wasn't a valid stateless token, and DB is down, report DB error
+                Response::error('Server Error: ' . $dbError, 500);
             }
-
-            // Check download count
-            if ($tokenRecord['download_count'] >= $tokenRecord['max_downloads']) {
-                Response::error('Maximum downloads exceeded', 429);
-            }
-
-            $filename = $tokenRecord['pdf_filename'];
             
-            // Update download count
+            Response::error('Invalid download token', 404);
+        }
+
+        // DB Token Logic (if record found)
+        // Check expiry
+        if (strtotime($tokenRecord['expires_at']) < time()) {
+            Response::error('Download token has expired', 410);
+        }
+
+        // Check download count
+        if ($tokenRecord['download_count'] >= $tokenRecord['max_downloads']) {
+            Response::error('Maximum downloads exceeded', 429);
+        }
+
+        $filename = $tokenRecord['pdf_filename'];
+        
+        // Update download count
+        try {
             $db->update('download_tokens', [
                 'download_count' => $tokenRecord['download_count'] + 1,
                 'last_download_at' => date('Y-m-d H:i:s'),
                 'ip_address' => $this->getClientIp(),
             ], 'id = ?', [$tokenRecord['id']]);
-
-            $this->serveFile($filename);
-
         } catch (\Exception $e) {
-            // If DB fails, try fallback if we can't verify token... 
-            // Actually verification impossible without DB.
-            Response::error('Server Error: ' . $e->getMessage(), 500);
+            // Ignore update failure if DB is flaky
         }
+
+        $this->serveFile($filename);
     }
 
     /**

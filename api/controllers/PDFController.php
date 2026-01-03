@@ -108,8 +108,17 @@ class PDFController extends BaseController
             }
 
             // Generate download token
-            $downloadToken = bin2hex(random_bytes(32));
-            $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+        
+        // Use a stateless token (signed payload) to allow download even if DB insert fails
+        // Payload: filename | expiry
+        $secret = $_ENV['APP_KEY'] ?? 'BioDataMaker_Fallback_Secret_2025';
+        $payload = base64_encode(json_encode([
+            'f' => $result['filename'],
+            'e' => strtotime($expiresAt)
+        ]));
+        $signature = hash_hmac('sha256', $payload, $secret);
+        $downloadToken = $payload . '.' . $signature;
 
             // Try to save to database (optional)
             $biodataId = 0;
@@ -243,8 +252,16 @@ class PDFController extends BaseController
         }
 
         // Generate new token
-        $downloadToken = bin2hex(random_bytes(32));
         $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+        // Use a stateless token (signed payload) to allow download even if DB insert fails
+        // Payload: filename | expiry
+        $secret = $_ENV['APP_KEY'] ?? 'BioDataMaker_Fallback_Secret_2025';
+        $payload = base64_encode(json_encode([
+            'f' => $biodata['pdf_filename'], // Use biodata's filename
+            'e' => strtotime($expiresAt)
+        ]));
+        $signature = hash_hmac('sha256', $payload, $secret);
+        $downloadToken = $payload . '.' . $signature; // Format: payload.signature
 
         $db->insert('download_tokens', [
             'biodata_id' => $biodata['id'],
