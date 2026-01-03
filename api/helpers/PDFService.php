@@ -15,16 +15,20 @@ class PDFService
     private string $templatesPath;
     private string $outputPath;
     private string $fontsPath;
+    private string $tempPath;
 
     public function __construct()
     {
         $this->templatesPath = APP_ROOT . '/templates/html';
         $this->outputPath = APP_ROOT . '/storage/pdfs';
         $this->fontsPath = APP_ROOT . '/storage/fonts';
+        $this->tempPath = APP_ROOT . '/storage/temp';
 
-        // Ensure directories exist
-        if (!is_dir($this->outputPath)) {
-            mkdir($this->outputPath, 0755, true);
+        // Ensure all directories exist
+        foreach ([$this->outputPath, $this->fontsPath, $this->tempPath] as $dir) {
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
         }
     }
 
