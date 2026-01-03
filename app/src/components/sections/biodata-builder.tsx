@@ -10,6 +10,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Upload, User, GraduationCap, Users as UsersIcon, Phone } from 'lucide-react';
 import api, { ApiError } from '@/lib/api';
 
+// Helper: convert camelCase to snake_case for PHP backend
+const toSnakeCase = (obj: Record<string, unknown>): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+  for (const key in obj) {
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    result[snakeKey] = obj[key];
+  }
+  return result;
+};
+
 // =============================================
 // Types (preserving existing structure)
 // =============================================
@@ -98,25 +108,26 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
     }
     setGenerating(true);
     setError('');
+    
+    // Convert camelCase form data to snake_case for PHP backend
+    const formData = toSnakeCase(data as unknown as Record<string, unknown>);
+    
     try {
       const response = await api.biodatas.generate({
         template_id: selectedTemplate,
         name: data.fullName,
-        biodata_data: data as unknown as Record<string, unknown>
+        form_data: formData
       });
       setResult({
-        downloadUrl: api.biodatas.getDownloadUrl(response.biodata.download_token || ''),
-        shareUrl: `${window.location.origin}/view/${response.biodata.share_token}`
+        downloadUrl: api.biodatas.getDownloadUrl(response.biodata?.download_token || response.download_token || ''),
+        shareUrl: `${window.location.origin}/view/${response.biodata?.share_token || 'preview'}`
       });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        // Demo mode
-        setResult({
-          downloadUrl: '#demo',
-          shareUrl: `${window.location.origin}/view/demo-${Date.now()}`
-        });
+        setError('Failed to generate biodata. Please try again.');
+        console.error('Generate error:', err);
       }
     } finally {
       setGenerating(false);
@@ -416,15 +427,43 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
             <Card className="bg-gradient-to-br from-[#FFF8F0] to-[#FFE4CC]">
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#6B7280] mb-4">Live Preview</p>
-                <div className="bg-white rounded-xl p-6 shadow-inner">
+                <div className="bg-white rounded-xl p-4 shadow-inner max-h-[500px] overflow-y-auto">
                   <div className="text-2xl mb-2">🕉️</div>
                   <h4 className="font-bold mb-4 text-[#0D5C63]">Your Biodata</h4>
-                  <div className="space-y-2 text-sm text-left">
+                  <div className="space-y-3 text-sm text-left">
+                    {/* Personal */}
                     {data.fullName && <p><strong>Name:</strong> {data.fullName}</p>}
                     {data.dateOfBirth && <p><strong>DOB:</strong> {data.dateOfBirth}</p>}
+                    {data.birthTime && <p><strong>Birth Time:</strong> {data.birthTime}</p>}
+                    {data.birthPlace && <p><strong>Birth Place:</strong> {data.birthPlace}</p>}
+                    {data.height && <p><strong>Height:</strong> {data.height}</p>}
+                    {data.complexion && <p><strong>Complexion:</strong> {data.complexion}</p>}
+                    {data.bloodGroup && <p><strong>Blood Group:</strong> {data.bloodGroup}</p>}
+                    {data.maritalStatus && data.maritalStatus !== 'Never Married' && <p><strong>Marital Status:</strong> {data.maritalStatus}</p>}
+                    {data.aboutMe && <p><strong>About:</strong> {data.aboutMe}</p>}
+                    
+                    {/* Education & Career */}
                     {data.education && <p><strong>Education:</strong> {data.education}</p>}
-                    {data.occupation && <p><strong>Work:</strong> {data.occupation}</p>}
-                    {data.city && <p><strong>City:</strong> {data.city}</p>}
+                    {data.occupation && <p><strong>Occupation:</strong> {data.occupation}</p>}
+                    {data.company && <p><strong>Company:</strong> {data.company}</p>}
+                    {data.income && <p><strong>Income:</strong> {data.income}</p>}
+                    {data.hobbies && <p><strong>Hobbies:</strong> {data.hobbies}</p>}
+                    
+                    {/* Family */}
+                    {data.religion && <p><strong>Religion:</strong> {data.religion}</p>}
+                    {data.caste && <p><strong>Caste:</strong> {data.caste}</p>}
+                    {data.gotra && <p><strong>Gotra:</strong> {data.gotra}</p>}
+                    {data.familyType && <p><strong>Family Type:</strong> {data.familyType}</p>}
+                    {data.fatherName && <p><strong>Father:</strong> {data.fatherName} {data.fatherOccupation && `(${data.fatherOccupation})`}</p>}
+                    {data.motherName && <p><strong>Mother:</strong> {data.motherName} {data.motherOccupation && `(${data.motherOccupation})`}</p>}
+                    {data.siblings && <p><strong>Siblings:</strong> {data.siblings}</p>}
+                    
+                    {/* Contact */}
+                    {(data.address || data.city || data.state) && (
+                      <p><strong>Location:</strong> {[data.address, data.city, data.state].filter(Boolean).join(', ')}</p>
+                    )}
+                    {data.phone && <p><strong>Phone:</strong> {data.phone}</p>}
+                    {data.email && <p><strong>Email:</strong> {data.email}</p>}
                   </div>
                   {!data.fullName && (
                     <p className="text-gray-400 text-sm mt-4">

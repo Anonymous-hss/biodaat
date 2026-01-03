@@ -4,6 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import api, { ApiError } from '@/lib/api';
 
+// Helper: convert camelCase to snake_case for PHP backend
+const toSnakeCase = (obj: Record<string, unknown>): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+  for (const key in obj) {
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    result[snakeKey] = obj[key];
+  }
+  return result;
+};
+
 // Types
 interface BiodataData {
   // Step 1: Photo & Basics
@@ -666,25 +676,26 @@ export default function CreateBiodata() {
                         }
                         setGenerating(true);
                         setError('');
+                        
+                        // Convert to snake_case for PHP backend
+                        const formData = toSnakeCase(data as unknown as Record<string, unknown>);
+                        
                         try {
                           const response = await api.biodatas.generate({
                             template_id: 1,
                             name: data.fullName,
-                            biodata_data: data as unknown as Record<string, unknown>
+                            form_data: formData
                           });
                           setResult({
-                            downloadUrl: api.biodatas.getDownloadUrl(response.biodata.download_token || ''),
-                            shareUrl: `${window.location.origin}/view/${response.biodata.share_token}`
+                            downloadUrl: api.biodatas.getDownloadUrl(response.download_token || ''),
+                            shareUrl: `${window.location.origin}/view/${response.biodata?.share_token || 'preview'}`
                           });
                         } catch (err) {
                           if (err instanceof ApiError) {
                             setError(err.message);
                           } else {
-                            // Demo mode - generate mock result
-                            setResult({
-                              downloadUrl: '#',
-                              shareUrl: `${window.location.origin}/view/demo-${Date.now()}`
-                            });
+                            setError('Failed to generate biodata. Please try again later.');
+                            console.error('Generate error:', err);
                           }
                         } finally {
                           setGenerating(false);

@@ -188,8 +188,8 @@ export const biodatasApi = {
   generate: async (data: {
     template_id: number;
     name: string;
-    biodata_data: Record<string, unknown>;
-  }): Promise<{ biodata: Biodata; download_url: string }> => {
+    form_data: Record<string, unknown>;
+  }): Promise<{ biodata?: Biodata; biodata_id?: number; download_token: string; download_url: string; filename?: string }> => {
     return apiFetch('generate-pdf.php', {
       method: 'POST',
       body: JSON.stringify(data),

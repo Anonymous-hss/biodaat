@@ -88,29 +88,41 @@ class PDFService
      */
     private function renderDefaultTemplate(array $template, array $formData): string
     {
+        // Personal Details
         $name = $formData['full_name'] ?? 'Name Not Provided';
         $dob = $formData['date_of_birth'] ?? '';
+        $birthTime = $formData['birth_time'] ?? '';
         $birthPlace = $formData['birth_place'] ?? '';
         $height = $formData['height'] ?? '';
         $complexion = $formData['complexion'] ?? '';
         $bloodGroup = $formData['blood_group'] ?? '';
+        $maritalStatus = $formData['marital_status'] ?? 'Never Married';
+        $aboutMe = $formData['about_me'] ?? '';
         
+        // Religious Background
         $religion = $formData['religion'] ?? '';
         $caste = $formData['caste'] ?? '';
         $gotra = $formData['gotra'] ?? '';
         
+        // Education & Career
         $education = $formData['education'] ?? '';
         $occupation = $formData['occupation'] ?? '';
         $company = $formData['company'] ?? '';
         $income = $formData['income'] ?? '';
+        $hobbies = $formData['hobbies'] ?? '';
         
+        // Family Details
         $fatherName = $formData['father_name'] ?? '';
         $fatherOccupation = $formData['father_occupation'] ?? '';
         $motherName = $formData['mother_name'] ?? '';
+        $motherOccupation = $formData['mother_occupation'] ?? '';
         $siblings = $formData['siblings'] ?? '';
+        $familyType = $formData['family_type'] ?? '';
         
+        // Contact Information
         $address = $formData['address'] ?? '';
         $city = $formData['city'] ?? '';
+        $state = $formData['state'] ?? '';
         $phone = $formData['phone'] ?? '';
         $email = $formData['email'] ?? '';
 
@@ -225,6 +237,10 @@ class PDFService
                 <div class="field-value">{$dob}</div>
             </div>
             <div class="field-row">
+                <div class="field-label">Birth Time</div>
+                <div class="field-value">{$birthTime}</div>
+            </div>
+            <div class="field-row">
                 <div class="field-label">Birth Place</div>
                 <div class="field-value">{$birthPlace}</div>
             </div>
@@ -239,6 +255,14 @@ class PDFService
             <div class="field-row">
                 <div class="field-label">Blood Group</div>
                 <div class="field-value">{$bloodGroup}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Marital Status</div>
+                <div class="field-value">{$maritalStatus}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">About Me</div>
+                <div class="field-value">{$aboutMe}</div>
             </div>
         </div>
 
@@ -276,10 +300,18 @@ class PDFService
                 <div class="field-label">Annual Income</div>
                 <div class="field-value">{$income}</div>
             </div>
+            <div class="field-row">
+                <div class="field-label">Hobbies</div>
+                <div class="field-value">{$hobbies}</div>
+            </div>
         </div>
 
         <div class="section">
             <div class="section-title">Family Details</div>
+            <div class="field-row">
+                <div class="field-label">Family Type</div>
+                <div class="field-value">{$familyType}</div>
+            </div>
             <div class="field-row">
                 <div class="field-label">Father's Name</div>
                 <div class="field-value">{$fatherName}</div>
@@ -293,6 +325,10 @@ class PDFService
                 <div class="field-value">{$motherName}</div>
             </div>
             <div class="field-row">
+                <div class="field-label">Mother's Occupation</div>
+                <div class="field-value">{$motherOccupation}</div>
+            </div>
+            <div class="field-row">
                 <div class="field-label">Siblings</div>
                 <div class="field-value">{$siblings}</div>
             </div>
@@ -302,7 +338,15 @@ class PDFService
             <div class="section-title">Contact Information</div>
             <div class="field-row">
                 <div class="field-label">Address</div>
-                <div class="field-value">{$address}, {$city}</div>
+                <div class="field-value">{$address}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">City</div>
+                <div class="field-value">{$city}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">State</div>
+                <div class="field-value">{$state}</div>
             </div>
             <div class="field-row">
                 <div class="field-label">Contact Number</div>
