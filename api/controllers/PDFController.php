@@ -20,14 +20,14 @@ class PDFController extends BaseController
     /**
      * Generate biodata PDF
      * POST /api/generate-pdf.php
+     * 
+     * Authentication is OPTIONAL - guests can generate free templates
      */
     public function generate(): void
     {
-        // Get authenticated user
+        // Get user if authenticated (optional - guests allowed)
         $user = Auth::user();
-        if ($user === null) {
-            Response::unauthorized('Please login to generate PDF');
-        }
+        $userId = $user ? (int) $user['id'] : 0; // 0 = guest user
 
         $data = $this->getJsonBody();
 
@@ -55,16 +55,23 @@ class PDFController extends BaseController
             [$templateId]
         );
 
+        // If no template found, use default (for demo)
         if ($template === null) {
-            Response::notFound('Template not found');
+            $template = [
+                'id' => 1,
+                'name' => 'Classic Template',
+                'slug' => 'classic',
+                'template_file' => 'classic.html',
+                'price' => 0
+            ];
         }
 
-        // Check if template is premium and user has purchased
-        if ((float) $template['price'] > 0) {
+        // Skip premium check for guests - only free templates allowed
+        if ($userId > 0 && (float) $template['price'] > 0) {
             $hasPurchased = $db->exists(
                 'orders',
                 'user_id = ? AND template_id = ? AND status IN (?, ?)',
-                [$user['id'], $templateId, 'paid', 'free']
+                [$userId, $templateId, 'paid', 'free']
             );
 
             if (!$hasPurchased) {
@@ -78,11 +85,11 @@ class PDFController extends BaseController
         // Generate PDF
         try {
             $pdfService = new PDFService();
-            $result = $pdfService->generate($template, $formData, (int) $user['id']);
+            $result = $pdfService->generate($template, $formData, $userId);
 
             // Save to database
             $biodataId = $db->insert('generated_biodatas', [
-                'user_id' => $user['id'],
+                'user_id' => $userId,
                 'template_id' => $templateId,
                 'form_data' => json_encode($formData),
                 'pdf_filename' => $result['filename'],
