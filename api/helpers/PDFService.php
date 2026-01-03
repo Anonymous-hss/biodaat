@@ -35,29 +35,49 @@ class PDFService
     /**
      * Generate PDF from template and form data
      */
-    public function generate(array $template, array $formData, int $userId): array
+    /**
+     * Generate PDF from template and form data
+     */
+    public function generate(array $template, array $formData, int $userId, string $format = 'pdf'): array
     {
         // Render HTML from template
         $html = $this->renderTemplate($template, $formData);
 
         // Generate unique filename
         $filename = $this->generateFilename($template['slug'], $userId);
+        
+        // Adjust extension for HTML requests
+        if ($format === 'html') {
+            $filename = str_replace('.pdf', '.html', $filename);
+        }
+        
         $filepath = $this->outputPath . '/' . $filename;
 
-        // Check if mPDF is available
-        if ($this->isMPDFAvailable()) {
-            $this->generateWithMPDF($html, $filepath, $template);
+        // Check if mPDF is available AND PDF requested
+        if ($format === 'pdf' && $this->isMPDFAvailable()) {
+            try {
+                $this->generateWithMPDF($html, $filepath, $template);
+            } catch (\Throwable $e) {
+                // Fallback to HTML if PDF fails
+                error_log("MPDF Failed: " . $e->getMessage());
+                $this->generateHTMLFallback($html, $filepath);
+                $filename = str_replace('.pdf', '.html', $filename); // Fix filename for return
+                $filepath = str_replace('.pdf', '.html', $filepath); // Fix filepath for return
+            }
         } else {
             // Fallback: Save as HTML (user can print to PDF)
             $this->generateHTMLFallback($html, $filepath);
-            $filename = str_replace('.pdf', '.html', $filename);
-            $filepath = str_replace('.pdf', '.html', $filepath);
+            // Ensure consistency if we fell through here but format was 'pdf' (i.e. mPDF missing)
+            if (substr($filename, -4) !== '.html') {
+                $filename = str_replace('.pdf', '.html', $filename);
+                $filepath = str_replace('.pdf', '.html', $filepath);
+            }
         }
 
         return [
             'filename' => $filename,
             'filepath' => $filepath,
-            'size' => filesize($filepath),
+            'size' => file_exists($filepath) ? filesize($filepath) : 0,
         ];
     }
 

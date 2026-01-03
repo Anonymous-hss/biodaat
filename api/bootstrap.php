@@ -106,6 +106,11 @@ define('APP_ENV', env('APP_ENV', 'production'));
 // AUTOLOADER
 // ============================================
 
+// Load Composer autoloader
+if (file_exists(APP_ROOT . '/vendor/autoload.php')) {
+    require_once APP_ROOT . '/vendor/autoload.php';
+}
+
 /**
  * Simple PSR-4 style autoloader for our classes
  */

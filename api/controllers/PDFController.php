@@ -101,7 +101,8 @@ class PDFController extends BaseController
             // Generate PDF
             try {
                 $pdfService = new PDFService();
-                $result = $pdfService->generate($template, $formData, $userId);
+                $format = $data['format'] ?? 'pdf';
+                $result = $pdfService->generate($template, $formData, $userId, $format);
             } catch (\Exception $e) {
                 error_log('PDF Generation Error: ' . $e->getMessage());
                 throw new \Exception('PDF generation failed: ' . $e->getMessage());

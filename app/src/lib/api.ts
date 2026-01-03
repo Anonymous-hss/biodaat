@@ -211,6 +211,7 @@ export const biodatasApi = {
     template_id: number;
     name: string;
     form_data: Record<string, unknown>;
+    format?: 'pdf' | 'html';
   }): Promise<{ biodata?: Biodata; biodata_id?: number; download_token: string; download_url: string; filename?: string }> => {
     return apiFetch('generate-pdf.php', {
       method: 'POST',

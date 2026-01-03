@@ -199,7 +199,7 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
     return Object.keys(errors).length === 0;
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (format: 'pdf' | 'html' = 'pdf') => {
     if (!validateForm()) {
       setError('Please fix the validation errors');
       return;
@@ -214,7 +214,8 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
       const response = await api.biodatas.generate({
         template_id: selectedTemplate,
         name: data.fullName,
-        form_data: formData
+        form_data: formData,
+        format
       });
       setResult({
         downloadUrl: api.biodatas.getDownloadUrl(response.biodata?.download_token || response.download_token || ''),
@@ -555,9 +556,14 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
                   </div>
                 </Card>
               ) : (
-                <Button onClick={handleGenerate} disabled={generating} size="lg" className="w-full text-xl py-6">
-                  {generating ? '⏳ Generating...' : '✨ Generate My Biodata'}
-                </Button>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button onClick={() => handleGenerate('pdf')} disabled={generating} size="lg" className="w-full text-lg py-6 flex-1">
+                    {generating ? '⏳ Generating...' : '✨ Generate PDF'}
+                  </Button>
+                  <Button onClick={() => handleGenerate('html')} disabled={generating} variant="outline" size="lg" className="w-full text-lg py-6 flex-1 bg-white hover:bg-gray-50 text-gray-700 border-gray-300">
+                    📄 Generate HTML
+                  </Button>
+                </div>
               )}
             </div>
           </div>
