@@ -51,6 +51,7 @@ class PDFService
             // Fallback: Save as HTML (user can print to PDF)
             $this->generateHTMLFallback($html, $filepath);
             $filename = str_replace('.pdf', '.html', $filename);
+            $filepath = str_replace('.pdf', '.html', $filepath);
         }
 
         return [
