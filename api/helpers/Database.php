@@ -62,7 +62,7 @@ class Database
                 );
             } catch (PDOException $e) {
                 error_log("Database connection failed: " . $e->getMessage());
-                throw new PDOException("Database connection failed");
+                throw new PDOException("Database connection failed: " . $e->getMessage());
             }
         }
 
