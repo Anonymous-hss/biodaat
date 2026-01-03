@@ -1,7 +1,29 @@
 // API Service for Biodaat
 // Handles all communication with PHP backend
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://biodaat.local/api';
+// Auto-detect API URL based on hostname
+const getApiBase = (): string => {
+  if (typeof window === 'undefined') {
+    // Server-side: use env variable or default
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
+  }
+  
+  // Client-side: detect from current hostname
+  const hostname = window.location.hostname;
+  
+  if (hostname === 'marriagebiodatamakr.in' || hostname === 'www.marriagebiodatamakr.in') {
+    return 'https://marriagebiodatamakr.in/api';
+  }
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost/api';
+  }
+  
+  // Fallback: same origin
+  return `${window.location.origin}/api`;
+};
+
+const API_BASE = getApiBase();
 
 // Generic API response type
 interface ApiResponse<T = unknown> {
