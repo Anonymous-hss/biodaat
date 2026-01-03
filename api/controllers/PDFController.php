@@ -25,121 +25,129 @@ class PDFController extends BaseController
      */
     public function generate(): void
     {
-        // Get user if authenticated (optional - guests allowed)
-        $user = Auth::user();
-        $userId = $user ? (int) $user['id'] : 0; // 0 = guest user
+        try {
+            // Get user if authenticated (optional - guests allowed)
+            $user = Auth::user();
+            $userId = $user ? (int) $user['id'] : 0; // 0 = guest user
 
-        $data = $this->getJsonBody();
+            $data = $this->getJsonBody();
 
-        // Validate input
-        $validator = Validator::make($data)
-            ->required('template_id', 'Template ID')
-            ->required('form_data', 'Form data');
+            // Validate input
+            $validator = Validator::make($data)
+                ->required('template_id', 'Template ID')
+                ->required('form_data', 'Form data');
 
-        if ($validator->fails()) {
-            Response::validationError($validator->errors());
-        }
-
-        $templateId = (int) $data['template_id'];
-        $formData = $data['form_data'];
-
-        if (!is_array($formData)) {
-            Response::error('Form data must be an object', 400);
-        }
-
-        $db = Database::getInstance();
-
-        // Get template
-        $template = $db->fetch(
-            "SELECT * FROM templates WHERE id = ? AND is_active = 1",
-            [$templateId]
-        );
-
-        // If no template found, use default (for demo)
-        if ($template === null) {
-            $template = [
-                'id' => 1,
-                'name' => 'Classic Template',
-                'slug' => 'classic',
-                'template_file' => 'classic.html',
-                'price' => 0
-            ];
-        }
-
-        // Skip premium check for guests - only free templates allowed
-        if ($userId > 0 && (float) $template['price'] > 0) {
-            $hasPurchased = $db->exists(
-                'orders',
-                'user_id = ? AND template_id = ? AND status IN (?, ?)',
-                [$userId, $templateId, 'paid', 'free']
-            );
-
-            if (!$hasPurchased) {
-                Response::error('Please purchase this template to generate PDF', 402, [
-                    'requires_payment' => true,
-                    'price' => (float) $template['price'],
-                ]);
+            if ($validator->fails()) {
+                Response::validationError($validator->errors());
+                return;
             }
-        }
 
-        // Generate PDF
-        try {
-            $pdfService = new PDFService();
-            $result = $pdfService->generate($template, $formData, $userId);
-        } catch (\Exception $e) {
-            error_log('PDF Generation Error: ' . $e->getMessage());
-            Response::error('PDF generation failed: ' . $e->getMessage(), 500, [
-                'step' => 'pdf_generation',
-                'error' => $e->getMessage()
-            ]);
-            return;
-        }
+            $templateId = (int) $data['template_id'];
+            $formData = $data['form_data'];
 
-        // Generate download token
-        $downloadToken = bin2hex(random_bytes(32));
-        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+            if (!is_array($formData)) {
+                Response::error('Form data must be an object', 400);
+                return;
+            }
 
-        // Try to save to database (optional - don't fail if tables don't exist)
-        $biodataId = 0;
-        try {
-            $biodataId = $db->insert('generated_biodatas', [
-                'user_id' => $userId,
-                'template_id' => $templateId,
-                'form_data' => json_encode($formData),
-                'pdf_filename' => $result['filename'],
-                'pdf_size' => $result['size'],
-                'generated_at' => date('Y-m-d H:i:s'),
-            ]);
+            $db = Database::getInstance();
 
-            // Update template download count
-            $db->query(
-                "UPDATE templates SET download_count = download_count + 1 WHERE id = ?",
+            // Get template
+            $template = $db->fetch(
+                "SELECT * FROM templates WHERE id = ? AND is_active = 1",
                 [$templateId]
             );
 
-            // Save download token
-            $db->insert('download_tokens', [
-                'biodata_id' => $biodataId,
-                'token' => $downloadToken,
-                'expires_at' => $expiresAt,
-                'max_downloads' => 5,
-                'download_count' => 0,
-            ]);
-        } catch (\Exception $e) {
-            // Log but don't fail - database is optional for now
-            error_log('Database insert failed: ' . $e->getMessage());
-        }
+            // If no template found, use default (for demo)
+            if ($template === null) {
+                $template = [
+                    'id' => 1,
+                    'name' => 'Classic Template',
+                    'slug' => 'classic',
+                    'template_file' => 'classic.html',
+                    'price' => 0
+                ];
+            }
 
-        // Return success with download URL
-        Response::success([
-            'biodata_id' => $biodataId,
-            'filename' => $result['filename'],
-            'size' => $result['size'],
-            'download_token' => $downloadToken,
-            'download_url' => '/api/download.php?token=' . $downloadToken,
-            'file_path' => $result['filepath'] ?? '',
-            'expires_at' => $expiresAt,
-        ], 'PDF generated successfully');
+            // Skip premium check for guests - only free templates allowed
+            if ($userId > 0 && (float) $template['price'] > 0) {
+                $hasPurchased = $db->exists(
+                    'orders',
+                    'user_id = ? AND template_id = ? AND status IN (?, ?)',
+                    [$userId, $templateId, 'paid', 'free']
+                );
+
+                if (!$hasPurchased) {
+                    Response::error('Please purchase this template to generate PDF', 402, [
+                        'requires_payment' => true,
+                        'price' => (float) $template['price'],
+                    ]);
+                    return;
+                }
+            }
+
+            // Generate PDF
+            try {
+                $pdfService = new PDFService();
+                $result = $pdfService->generate($template, $formData, $userId);
+            } catch (\Exception $e) {
+                error_log('PDF Generation Error: ' . $e->getMessage());
+                throw new \Exception('PDF generation failed: ' . $e->getMessage());
+            }
+
+            // Generate download token
+            $downloadToken = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+
+            // Try to save to database (optional - don't fail if tables don't exist)
+            $biodataId = 0;
+            try {
+                $biodataId = $db->insert('generated_biodatas', [
+                    'user_id' => $userId,
+                    'template_id' => $templateId,
+                    'form_data' => json_encode($formData),
+                    'pdf_filename' => $result['filename'],
+                    'pdf_size' => $result['size'],
+                    'generated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+                // Update template download count
+                $db->query(
+                    "UPDATE templates SET download_count = download_count + 1 WHERE id = ?",
+                    [$templateId]
+                );
+
+                // Save download token
+                $db->insert('download_tokens', [
+                    'biodata_id' => $biodataId,
+                    'token' => $downloadToken,
+                    'expires_at' => $expiresAt,
+                    'max_downloads' => 5,
+                    'download_count' => 0,
+                ]);
+            } catch (\Exception $e) {
+                // Log but don't fail - database is optional for now
+                error_log('Database insert failed: ' . $e->getMessage());
+            }
+
+            // Return success with download URL
+            Response::success([
+                'biodata_id' => $biodataId,
+                'filename' => $result['filename'],
+                'size' => $result['size'],
+                'download_token' => $downloadToken,
+                'download_url' => '/api/download.php?token=' . $downloadToken,
+                'file_path' => $result['filepath'] ?? '',
+                'expires_at' => $expiresAt,
+            ], 'PDF generated successfully');
+
+        } catch (\Throwable $e) {
+            error_log('Critical Error in PDFController: ' . $e->getMessage());
+            Response::error('Server Error: ' . $e->getMessage(), 500, [
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
     }
 
     /**
