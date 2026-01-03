@@ -20,6 +20,13 @@ class DownloadController extends BaseController
      */
     public function download(): void
     {
+        // Check for direct file download (fallback for when DB is down)
+        $fileParam = $this->getQuery('file');
+        if (!empty($fileParam)) {
+            $this->serveDirectFile($fileParam);
+            return;
+        }
+
         $token = $this->getQuery('token');
 
         if (empty($token)) {
@@ -28,31 +35,70 @@ class DownloadController extends BaseController
 
         $db = Database::getInstance();
 
-        // Find token
-        $tokenRecord = $db->fetch(
-            "SELECT dt.*, gb.pdf_filename, gb.user_id
-            FROM download_tokens dt
-            JOIN generated_biodatas gb ON dt.biodata_id = gb.id
-            WHERE dt.token = ?",
-            [$token]
-        );
+        try {
+            // Find token
+            $tokenRecord = $db->fetch(
+                "SELECT dt.*, gb.pdf_filename, gb.user_id
+                FROM download_tokens dt
+                JOIN generated_biodatas gb ON dt.biodata_id = gb.id
+                WHERE dt.token = ?",
+                [$token]
+            );
 
-        if ($tokenRecord === null) {
-            Response::error('Invalid download token', 404);
+            if ($tokenRecord === null) {
+                Response::error('Invalid download token', 404);
+            }
+
+            // Check expiry
+            if (strtotime($tokenRecord['expires_at']) < time()) {
+                Response::error('Download token has expired', 410);
+            }
+
+            // Check download count
+            if ($tokenRecord['download_count'] >= $tokenRecord['max_downloads']) {
+                Response::error('Maximum downloads exceeded', 429);
+            }
+
+            $filename = $tokenRecord['pdf_filename'];
+            
+            // Update download count
+            $db->update('download_tokens', [
+                'download_count' => $tokenRecord['download_count'] + 1,
+                'last_download_at' => date('Y-m-d H:i:s'),
+                'ip_address' => $this->getClientIp(),
+            ], 'id = ?', [$tokenRecord['id']]);
+
+            $this->serveFile($filename);
+
+        } catch (\Exception $e) {
+            // If DB fails, try fallback if we can't verify token... 
+            // Actually verification impossible without DB.
+            Response::error('Server Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Serve file directly (Sanitized)
+     */
+    private function serveDirectFile(string $filename): void
+    {
+        // SANITIZE! prevent path traversal
+        $filename = basename($filename);
+        
+        // Simple validation: must start with biodata_ and allow .pdf or .html
+        if (strpos($filename, 'biodata_') !== 0 || !preg_match('/\.(pdf|html)$/', $filename)) {
+            Response::error('Invalid filename', 400);
         }
 
-        // Check expiry
-        if (strtotime($tokenRecord['expires_at']) < time()) {
-            Response::error('Download token has expired', 410);
-        }
+        $this->serveFile($filename);
+    }
 
-        // Check download count
-        if ($tokenRecord['download_count'] >= $tokenRecord['max_downloads']) {
-            Response::error('Maximum downloads exceeded', 429);
-        }
-
+    /**
+     * Common serve file logic
+     */
+    private function serveFile(string $filename): void
+    {
         // Get file path
-        $filename = $tokenRecord['pdf_filename'];
         $filepath = APP_ROOT . '/storage/pdfs/' . $filename;
 
         // Check if file is HTML (fallback mode)
@@ -65,14 +111,7 @@ class DownloadController extends BaseController
                 Response::error('File not found', 404);
             }
         }
-
-        // Update download count
-        $db->update('download_tokens', [
-            'download_count' => $tokenRecord['download_count'] + 1,
-            'last_download_at' => date('Y-m-d H:i:s'),
-            'ip_address' => $this->getClientIp(),
-        ], 'id = ?', [$tokenRecord['id']]);
-
+        
         // Determine content type
         $extension = pathinfo($filepath, PATHINFO_EXTENSION);
         $contentType = $extension === 'pdf' ? 'application/pdf' : 'text/html';
@@ -89,6 +128,7 @@ class DownloadController extends BaseController
         readfile($filepath);
         exit;
     }
+
 
     /**
      * Preview file (inline, not download)

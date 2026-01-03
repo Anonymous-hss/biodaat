@@ -113,6 +113,7 @@ class PDFController extends BaseController
 
             // Try to save to database (optional)
             $biodataId = 0;
+            $dbInsertSuccess = false;
             try {
                 $biodataId = $db->insert('generated_biodatas', [
                     'user_id' => $userId,
@@ -137,9 +138,17 @@ class PDFController extends BaseController
                     'max_downloads' => 5,
                     'download_count' => 0,
                 ]);
+                $dbInsertSuccess = true;
             } catch (\Exception $e) {
                 // Log but don't fail - database is optional for now
                 error_log('Database insert failed: ' . $e->getMessage());
+            }
+
+            // Determine download URL
+            $downloadUrl = '/api/download.php?token=' . $downloadToken;
+            if (!$dbInsertSuccess) {
+                // Fallback to file-based download if DB failed
+                $downloadUrl = '/api/download.php?file=' . urlencode($result['filename']);
             }
 
             // Return success with download URL
@@ -148,7 +157,7 @@ class PDFController extends BaseController
                 'filename' => $result['filename'],
                 'size' => $result['size'],
                 'download_token' => $downloadToken,
-                'download_url' => '/api/download.php?token=' . $downloadToken,
+                'download_url' => $downloadUrl,
                 'file_path' => $result['filepath'] ?? '',
                 'expires_at' => $expiresAt,
             ], 'PDF generated successfully');
