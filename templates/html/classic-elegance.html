@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{full_name}} - Biodata</title>
+    <style>
+        @page {
+            margin: 15mm;
+            margin-top: 10mm;
+            size: A4;
+        }
+        body {
+            font-family: 'Deja Vu Sans', sans-serif; /* Standard mPDF font */
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.5;
+        }
+        h1, h2, h3 { margin: 0; padding: 0; }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 3px double #8B4513;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .om {
+            font-size: 32pt;
+            color: #FF6600;
+            font-family: sans-serif; 
+            margin-bottom: 5px;
+        }
+        .title {
+            color: #8B4513;
+            font-size: 24pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-size: 12pt;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-header {
+            background-color: #8B4513;
+            color: white;
+            padding: 6px 10px;
+            font-size: 13pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        /* Tables for Layout (mPDF loves tables) */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 6px 5px;
+            vertical-align: top;
+            border-bottom: 1px dotted #ccc;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .label {
+            width: 35%;
+            font-weight: bold;
+            color: #555;
+        }
+        .value {
+            width: 65%;
+            color: #000;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            font-size: 9pt;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="om">|| श्री गणेशाय नमः ||</div>
+        <h1 class="title">{{full_name}}</h1>
+        <div class="subtitle">Marriage Biodata</div>
+    </div>
+
+    <!-- Personal Details -->
+    <div class="section">
+        <div class="section-header">Personal Details</div>
+        <table>
+            <tr><td class="label">Date of Birth</td><td class="value">{{date_of_birth}}</td></tr>
+            <tr><td class="label">Birth Time</td><td class="value">{{birth_time}}</td></tr>
+            <tr><td class="label">Birth Place</td><td class="value">{{birth_place}}</td></tr>
+            <tr><td class="label">Height</td><td class="value">{{height}}</td></tr>
+            <tr><td class="label">Complexion</td><td class="value">{{complexion}}</td></tr>
+            <tr><td class="label">Blood Group</td><td class="value">{{blood_group}}</td></tr>
+            <tr><td class="label">Marital Status</td><td class="value">{{marital_status}}</td></tr>
+        </table>
+    </div>
+
+    <!-- About Me -->
+    <div class="section">
+        <div class="section-header">About Me</div>
+        <table>
+            <tr><td class="value" colspan="2">{{about_me}}</td></tr>
+        </table>
+    </div>
+
+    <!-- Religious Background -->
+    <div class="section">
+        <div class="section-header">Religious Information</div>
+        <table>
+            <tr><td class="label">Religion</td><td class="value">{{religion}}</td></tr>
+            <tr><td class="label">Caste</td><td class="value">{{caste}}</td></tr>
+            <tr><td class="label">Sub-caste</td><td class="value">{{sub_caste}}</td></tr>
+            <tr><td class="label">Gotra</td><td class="value">{{gotra}}</td></tr>
+        </table>
+    </div>
+
+    <!-- Education & Career -->
+    <div class="section">
+        <div class="section-header">Education & Career</div>
+        <table>
+            <tr><td class="label">Education</td><td class="value">{{education}}</td></tr>
+            <tr><td class="label">Occupation</td><td class="value">{{occupation}}</td></tr>
+            <tr><td class="label">Company/Organization</td><td class="value">{{company}}</td></tr>
+            <tr><td class="label">Annual Income</td><td class="value">{{income}}</td></tr>
+            <tr><td class="label">Hobbies</td><td class="value">{{hobbies}}</td></tr>
+        </table>
+    </div>
+
+    <!-- Family Details -->
+    <div class="section">
+        <div class="section-header">Family Details</div>
+        <table>
+            <tr><td class="label">Father's Name</td><td class="value">{{father_name}} {{father_occupation}}</td></tr>
+            <tr><td class="label">Mother's Name</td><td class="value">{{mother_name}} {{mother_occupation}}</td></tr>
+            <tr><td class="label">Siblings</td><td class="value">{{siblings}}</td></tr>
+            <tr><td class="label">Family Type</td><td class="value">{{family_type}}</td></tr>
+        </table>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="section">
+        <div class="section-header">Contact Information</div>
+        <table>
+            <tr><td class="label">Phone</td><td class="value">{{phone}}</td></tr>
+            <tr><td class="label">Email</td><td class="value">{{email}}</td></tr>
+            <tr><td class="label">Address</td><td class="value">{{address}}</td></tr>
+            <tr><td class="label">City/State</td><td class="value">{{city}}, {{state}}</td></tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        Generated by <strong>Biodaat.com</strong> on {{generated_date}}
+    </div>
+
+</body>
+</html>
