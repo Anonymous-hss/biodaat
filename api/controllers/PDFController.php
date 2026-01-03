@@ -51,14 +51,19 @@ class PDFController extends BaseController
             }
 
             $db = Database::getInstance();
+            $template = null;
 
-            // Get template
-            $template = $db->fetch(
-                "SELECT * FROM templates WHERE id = ? AND is_active = 1",
-                [$templateId]
-            );
+            // Try to get template from DB, otherwise fall back to default
+            try {
+                $template = $db->fetch(
+                    "SELECT * FROM templates WHERE id = ? AND is_active = 1",
+                    [$templateId]
+                );
+            } catch (\Exception $e) {
+                error_log('Database fetch failed (Template): ' . $e->getMessage());
+            }
 
-            // If no template found, use default (for demo)
+            // If no template found or DB failed, use default
             if ($template === null) {
                 $template = [
                     'id' => 1,
@@ -70,19 +75,26 @@ class PDFController extends BaseController
             }
 
             // Skip premium check for guests - only free templates allowed
+            // Only check if we successfully connected to DB
             if ($userId > 0 && (float) $template['price'] > 0) {
-                $hasPurchased = $db->exists(
-                    'orders',
-                    'user_id = ? AND template_id = ? AND status IN (?, ?)',
-                    [$userId, $templateId, 'paid', 'free']
-                );
+                try {
+                    $hasPurchased = $db->exists(
+                        'orders',
+                        'user_id = ? AND template_id = ? AND status IN (?, ?)',
+                        [$userId, $templateId, 'paid', 'free']
+                    );
 
-                if (!$hasPurchased) {
-                    Response::error('Please purchase this template to generate PDF', 402, [
-                        'requires_payment' => true,
-                        'price' => (float) $template['price'],
-                    ]);
-                    return;
+                    if (!$hasPurchased) {
+                        Response::error('Please purchase this template to generate PDF', 402, [
+                            'requires_payment' => true,
+                            'price' => (float) $template['price'],
+                        ]);
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    // If DB check fails, we might want to allow or block. 
+                    // For now, let's allow it to avoid blocking user due to system error.
+                    error_log('Database check failed (Orders): ' . $e->getMessage());
                 }
             }
 
@@ -99,7 +111,7 @@ class PDFController extends BaseController
             $downloadToken = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', time() + 3600);
 
-            // Try to save to database (optional - don't fail if tables don't exist)
+            // Try to save to database (optional)
             $biodataId = 0;
             try {
                 $biodataId = $db->insert('generated_biodatas', [
