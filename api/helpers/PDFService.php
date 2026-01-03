@@ -412,11 +412,13 @@ HTML;
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
-            'margin_left' => 15,
-            'margin_right' => 15,
-            'margin_top' => 15,
-            'margin_bottom' => 15,
+            'margin_left' => 10,  // Reduced margins for better fit
+            'margin_right' => 10,
+            'margin_top' => 10,
+            'margin_bottom' => 10,
             'tempDir' => APP_ROOT . '/storage/temp',
+            'autoScriptToLang' => true, // Better language support
+            'autoLangToFont' => true,   // Better font support
         ]);
 
         $mpdf->SetTitle('Biodata - ' . ($template['name'] ?? 'Wedding Biodata'));
