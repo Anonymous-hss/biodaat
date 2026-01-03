@@ -41,11 +41,17 @@ class Auth
         }
 
         // Fetch user from database
-        $db = Database::getInstance();
-        $user = $db->fetch(
-            "SELECT id, phone, name, email, created_at FROM users WHERE id = ? AND is_active = 1",
-            [$payload['user_id']]
-        );
+        try {
+            $db = Database::getInstance();
+            $user = $db->fetch(
+                "SELECT id, phone, name, email, created_at FROM users WHERE id = ? AND is_active = 1",
+                [$payload['user_id']]
+            );
+        } catch (\Exception $e) {
+            // If DB fails, we can't verify user, so treat as guest
+            error_log('Auth DB check failed: ' . $e->getMessage());
+            return null;
+        }
 
         if ($user === null) {
             return null;
