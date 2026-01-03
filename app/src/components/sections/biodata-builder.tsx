@@ -87,6 +87,81 @@ const initialData: BiodataData = {
   email: '',
 };
 
+// Predefined templates to speed up form filling
+const presetTemplates: { name: string; icon: string; data: Partial<BiodataData> }[] = [
+  {
+    name: 'Software Engineer',
+    icon: '💻',
+    data: {
+      education: 'B.Tech/B.E. (Computer Science)',
+      occupation: 'Software Engineer',
+      company: 'IT Company',
+      income: '10-15 LPA',
+      hobbies: 'Coding, Gaming, Reading Tech Blogs',
+      aboutMe: 'A tech enthusiast who loves building innovative solutions. Passionate about continuous learning and growth.',
+    }
+  },
+  {
+    name: 'Doctor',
+    icon: '⚕️',
+    data: {
+      education: 'MBBS / MD',
+      occupation: 'Doctor',
+      company: 'Hospital / Clinic',
+      income: '15-25 LPA',
+      hobbies: 'Reading, Yoga, Helping Community',
+      aboutMe: 'Dedicated medical professional committed to patient care with a compassionate approach to healing.',
+    }
+  },
+  {
+    name: 'Business Owner',
+    icon: '💼',
+    data: {
+      education: 'MBA / B.Com',
+      occupation: 'Businessman',
+      company: 'Self-Employed',
+      income: '20+ LPA',
+      hobbies: 'Networking, Travel, Reading Business Books',
+      aboutMe: 'An entrepreneur at heart who believes in creating value. Family-oriented with strong business acumen.',
+    }
+  },
+  {
+    name: 'Teacher',
+    icon: '📚',
+    data: {
+      education: 'M.A. / B.Ed.',
+      occupation: 'Teacher / Professor',
+      company: 'School / College',
+      income: '6-10 LPA',
+      hobbies: 'Reading, Writing, Music',
+      aboutMe: 'Passionate educator who believes in shaping young minds. Values knowledge, patience, and continuous learning.',
+    }
+  },
+  {
+    name: 'Government Job',
+    icon: '🏛️',
+    data: {
+      education: 'Graduate',
+      occupation: 'Government Officer',
+      company: 'Central/State Govt.',
+      income: '8-15 LPA',
+      hobbies: 'Sports, Reading, Social Service',
+      aboutMe: 'Dedicated public servant committed to serving the nation. Values integrity, discipline, and family.',
+    }
+  },
+];
+
+// Validation helpers
+const validatePhone = (phone: string): boolean => {
+  const phoneRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+  return phone === '' || phoneRegex.test(phone.replace(/\s/g, ''));
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return email === '' || emailRegex.test(email);
+};
+
 interface BiodataBuilderProps {
   selectedTemplate: number;
 }
@@ -96,14 +171,37 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ downloadUrl: string; shareUrl: string } | null>(null);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const updateData = (field: keyof BiodataData, value: string | null) => {
     setData(prev => ({ ...prev, [field]: value }));
+    // Clear validation error when field is updated
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Apply preset template
+  const applyPreset = (preset: typeof presetTemplates[0]) => {
+    setData(prev => ({ ...prev, ...preset.data }));
+  };
+
+  // Validate form before submission
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!data.fullName.trim()) errors.fullName = 'Name is required';
+    if (!data.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
+    if (data.phone && !validatePhone(data.phone)) errors.phone = 'Invalid phone format (e.g., +91 9876543210)';
+    if (data.email && !validateEmail(data.email)) errors.email = 'Invalid email format';
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleGenerate = async () => {
-    if (!data.fullName || !data.dateOfBirth) {
-      setError('Please fill Name and Date of Birth');
+    if (!validateForm()) {
+      setError('Please fix the validation errors');
       return;
     }
     setGenerating(true);
@@ -142,14 +240,28 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#1F2937]">
             Fill Your Details
           </h2>
-          <p className="text-xl text-[#6B7280]">
-            Your biodata preview updates in real-time
+          <p className="text-xl text-[#6B7280] mb-6">
+            Select a quick template or fill manually
           </p>
+          
+          {/* Quick Preset Buttons */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {presetTemplates.map((preset) => (
+              <button
+                key={preset.name}
+                onClick={() => applyPreset(preset)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#E5E7EB] bg-white hover:border-[#E07B39] hover:bg-[#FFF8F0] transition-all duration-200 text-sm font-medium text-[#374151]"
+              >
+                <span>{preset.icon}</span>
+                <span>{preset.name}</span>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -168,11 +280,25 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
                   <div className="grid md:grid-cols-2 gap-4 pt-2">
                     <div className="md:col-span-2">
                       <Label htmlFor="fullName">Full Name *</Label>
-                      <Input id="fullName" value={data.fullName} onChange={e => updateData('fullName', e.target.value)} placeholder="Enter your full name" />
+                      <Input 
+                        id="fullName" 
+                        value={data.fullName} 
+                        onChange={e => updateData('fullName', e.target.value)} 
+                        placeholder="Enter your full name"
+                        className={validationErrors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {validationErrors.fullName && <p className="text-red-500 text-sm mt-1">{validationErrors.fullName}</p>}
                     </div>
                     <div>
                       <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                      <Input id="dateOfBirth" type="date" value={data.dateOfBirth} onChange={e => updateData('dateOfBirth', e.target.value)} />
+                      <Input 
+                        id="dateOfBirth" 
+                        type="date" 
+                        value={data.dateOfBirth} 
+                        onChange={e => updateData('dateOfBirth', e.target.value)}
+                        className={validationErrors.dateOfBirth ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {validationErrors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{validationErrors.dateOfBirth}</p>}
                     </div>
                     <div>
                       <Label htmlFor="birthTime">Birth Time</Label>
@@ -377,11 +503,25 @@ export default function BiodataBuilder({ selectedTemplate }: BiodataBuilderProps
                     </div>
                     <div>
                       <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" value={data.phone} onChange={e => updateData('phone', e.target.value)} placeholder="+91 XXXXX XXXXX" />
+                      <Input 
+                        id="phone" 
+                        value={data.phone} 
+                        onChange={e => updateData('phone', e.target.value)} 
+                        placeholder="+91 9876543210"
+                        className={validationErrors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {validationErrors.phone && <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>}
                     </div>
                     <div>
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" value={data.email} onChange={e => updateData('email', e.target.value)} placeholder="your@email.com" />
+                      <Input 
+                        id="email" 
+                        value={data.email} 
+                        onChange={e => updateData('email', e.target.value)} 
+                        placeholder="your@email.com"
+                        className={validationErrors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {validationErrors.email && <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>}
                     </div>
                   </div>
                 </AccordionContent>
