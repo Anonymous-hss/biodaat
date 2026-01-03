@@ -19,12 +19,12 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center pt-24 pb-20 px-6 bg-gradient-to-br from-[#FFF8F0] via-[#FFE4CC] to-[#FFF8F0] relative overflow-hidden">
-      {/* Decorative Background Blobs */}
-      <div className="absolute top-[10%] right-[5%] w-[300px] h-[300px] rounded-full bg-[rgba(224,123,57,0.1)] blur-[60px] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-[20%] left-[10%] w-[200px] h-[200px] rounded-full bg-[rgba(13,92,99,0.1)] blur-[60px] opacity-40 pointer-events-none" />
+    <section className="min-h-screen flex items-center justify-center pt-32 pb-24 px-6 bg-gradient-to-br from-[#FFF8F0] via-[#FFE4CC] to-[#FFF8F0] relative overflow-hidden">
+      {/* Subtle decorative accents - very light */}
+      <div className="absolute top-[15%] right-[8%] w-[200px] h-[200px] rounded-full bg-[rgba(224,123,57,0.03)] opacity-20 pointer-events-none" />
+      <div className="absolute bottom-[25%] left-[12%] w-[150px] h-[150px] rounded-full bg-[rgba(13,92,99,0.03)] opacity-20 pointer-events-none" />
 
-      <div className="max-w-[1200px] mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-[1200px] mx-auto grid lg:grid-cols-2 gap-20 items-center">
         {/* Left: Content */}
         <div className="text-center lg:text-left">
           {/* Trust Badge */}
@@ -67,7 +67,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap gap-4 justify-center lg:justify-start"
+            className="flex flex-wrap gap-6 justify-center lg:justify-start"
           >
             <Button onClick={scrollToBuilder} size="lg">
               Create My Biodata →
@@ -82,7 +82,7 @@ export default function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-12 flex items-center gap-6 flex-wrap justify-center lg:justify-start"
+            className="mt-16 flex items-center gap-6 flex-wrap justify-center lg:justify-start"
           >
             <div className="flex items-center gap-2">
               <span className="text-green-600 text-lg">✓</span>

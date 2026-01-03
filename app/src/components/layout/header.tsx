@@ -30,7 +30,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <div className="max-w-[1200px] mx-auto px-6 py-4">
+      <div className="max-w-[1200px] mx-auto px-6 py-5">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5 group">

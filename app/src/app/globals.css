@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tell Tailwind v4 where to scan for classes */
+@source "../components/**/*.tsx";
+@source "../lib/**/*.ts";
+@source "./**/*.tsx";
+
 /* ============================================
    BIODAAT - Emotion-First Design System
    Deep Teal + Warm Saffron Palette
@@ -413,12 +418,12 @@ h3 { font-size: clamp(1.5rem, 3vw, 2rem); }
   font-size: 14px;
 }
 
-/* Decorative blobs */
+/* Decorative blobs - subtle accent only */
 .hero-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.4;
+  /* Removed aggressive blur - was causing viewport glow issue */
+  opacity: 0.05;
   pointer-events: none;
 }
 

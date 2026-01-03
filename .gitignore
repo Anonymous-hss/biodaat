@@ -53,3 +53,5 @@ app/package-lock.json
 *.log
 npm-debug.log*
 
+/biodata
+biodata.pub
