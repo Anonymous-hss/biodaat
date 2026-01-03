@@ -65,11 +65,24 @@ class PDFController extends BaseController
 
             // If no template found or DB failed, use default
             if ($template === null) {
+                // Default to Classic Elegance
+                $file = 'classic-elegance.html';
+                $name = 'Classic Elegance';
+                
+                // Map other IDs
+                if ($templateId == 2) {
+                    $file = 'modern-minimal.html';
+                    $name = 'Modern Minimal';
+                } elseif ($templateId == 3) {
+                    $file = 'royal-gold.html';
+                    $name = 'Royal Gold';
+                }
+                
                 $template = [
-                    'id' => 1,
-                    'name' => 'Classic Template',
-                    'slug' => 'classic',
-                    'template_file' => 'classic.html',
+                    'id' => $templateId,
+                    'name' => $name,
+                    'slug' => strtolower(str_replace(' ', '-', $name)),
+                    'template_file' => $file,
                     'price' => 0
                 ];
             }

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{full_name}} - Biodata</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            color: #1a1a1a;
+            line-height: 1.5;
+            background-color: #fff;
+        }
+        
+        /* Border Frame */
+        .frame {
+            border: 2px solid #D4AF37; /* Gold */
+            padding: 20px;
+            margin: 0;
+            height: 100%;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 32pt;
+            color: #D4AF37;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        .header .shloka {
+            color: #8B4513;
+            font-size: 16pt;
+            font-style: italic;
+        }
+
+        /* Section Headers */
+        .section-header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .section-header span {
+            background-color: #D4AF37;
+            color: white;
+            padding: 5px 20px;
+            font-size: 14pt;
+            border-radius: 20px;
+        }
+
+        /* Tables */
+        table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+        td { padding: 5px 10px; vertical-align: middle; }
+        .label {
+            width: 40%;
+            text-align: right;
+            font-weight: bold;
+            color: #8B4513;
+            padding-right: 15px;
+            border-right: 1px solid #D4AF37;
+        }
+        .value {
+            width: 60%;
+            text-align: left;
+            padding-left: 15px;
+            color: #000;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #D4AF37;
+            font-size: 10pt;
+            border-top: 1px solid #D4AF37;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="frame">
+        <div class="header">
+            <div class="shloka">|| Shree Ganeshay Namah ||</div>
+            <h1>{{full_name}}</h1>
+        </div>
+
+        <div class="section-header"><span>Personal Details</span></div>
+        <table>
+            <tr><td class="label">Date of Birth</td><td class="value">{{date_of_birth}}</td></tr>
+            <tr><td class="label">Time</td><td class="value">{{birth_time}}</td></tr>
+            <tr><td class="label">Place</td><td class="value">{{birth_place}}</td></tr>
+            <tr><td class="label">Height</td><td class="value">{{height}}</td></tr>
+            <tr><td class="label">Complexion</td><td class="value">{{complexion}}</td></tr>
+        </table>
+
+        <div class="section-header"><span>Family Background</span></div>
+        <table>
+            <tr><td class="label">Father</td><td class="value">{{father_name}}</td></tr>
+            <tr><td class="label">Mother</td><td class="value">{{mother_name}}</td></tr>
+            <tr><td class="label">Religion / Caste</td><td class="value">{{religion}} - {{caste}}</td></tr>
+            <tr><td class="label">Gotra</td><td class="value">{{gotra}}</td></tr>
+            <tr><td class="label">Family Type</td><td class="value">{{family_type}}</td></tr>
+        </table>
+
+        <div class="section-header"><span>Education / Career</span></div>
+        <table>
+            <tr><td class="label">Education</td><td class="value">{{education}}</td></tr>
+            <tr><td class="label">Occupation</td><td class="value">{{occupation}}</td></tr>
+            <tr><td class="label">Annual Income</td><td class="value">{{income}}</td></tr>
+        </table>
+
+        <div class="section-header"><span>Contact</span></div>
+        <table>
+            <tr><td class="label">Address</td><td class="value">{{address}}</td></tr>
+            <tr><td class="label">Phone</td><td class="value">{{phone}}</td></tr>
+        </table>
+
+        <div class="footer">
+            Best Compliments from {{family_name}} Family
+        </div>
+    </div>
+</body>
+</html>

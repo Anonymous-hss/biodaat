@@ -109,9 +109,16 @@ export default function CreateBiodata() {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<BiodataData>(initialData);
   const [showPreview, setShowPreview] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState(1);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ downloadUrl: string; shareUrl: string } | null>(null);
   const [error, setError] = useState('');
+
+  const templates = [
+    { id: 1, name: 'Classic Elegance', color: '#8B4513', desc: 'Traditional & Timeless' },
+    { id: 2, name: 'Modern Minimal', color: '#2d3748', desc: 'Clean & Professional' },
+    { id: 3, name: 'Royal Gold', color: '#D4AF37', desc: 'Premium & Ornate' }
+  ];
 
   const steps = [
     { num: 1, title: 'Photo & Basics', icon: '📸' },
@@ -164,6 +171,11 @@ export default function CreateBiodata() {
                 )}
               </div>
             ))}
+          </div>
+          
+          {/* Mobile Step Indicator */}
+          <div className="md:hidden text-sm font-medium text-[var(--teal-deep)]">
+            Step {currentStep} / {steps.length}
           </div>
 
           <button 
@@ -628,6 +640,31 @@ export default function CreateBiodata() {
                   </p>
                 </div>
 
+                {/* Template Selection */}
+                <div className="mb-8">
+                  <h3 className="font-bold text-lg mb-4">Choose Design</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {templates.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTemplate(t.id)}
+                        className={`p-4 rounded-xl border-2 text-left transition relative overflow-hidden
+                          ${selectedTemplate === t.id 
+                            ? 'border-[var(--teal-deep)] bg-[var(--cream)]' 
+                            : 'border-[var(--cream-dark)] hover:border-[var(--teal-muted)]'
+                          }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${selectedTemplate === t.id ? 'bg-[var(--teal-deep)] text-white' : 'bg-gray-100'}`}>
+                          {selectedTemplate === t.id && '✓'}
+                        </div>
+                        <div className="font-bold text-[var(--charcoal)]">{t.name}</div>
+                        <div className="text-xs text-[var(--charcoal-light)]">{t.desc}</div>
+                        <div className="h-1 w-full mt-3 rounded-full" style={{ background: t.color }}></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Download Options */}
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg">Get Your Biodata</h3>
@@ -682,7 +719,7 @@ export default function CreateBiodata() {
                         
                         try {
                           const response = await api.biodatas.generate({
-                            template_id: 1,
+                            template_id: selectedTemplate,
                             name: data.fullName,
                             form_data: formData
                           });
